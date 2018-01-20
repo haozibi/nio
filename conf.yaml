@@ -1,0 +1,39 @@
+
+##################################################################
+#           _   _ ___ ___            
+#           | \ | |_ _/ _ \          
+#           |  \| || | | | |         
+#           | |\  || | |_| |         
+#           |_| \_|___\___/          
+#                                                                        
+# conf.yaml 采用YAML格式， 请参考 http://yaml.org/
+# 请不要使用TAB键，应该使用空格
+# 一定要注意对齐，否则发布会失败
+# 注意：所有配置选项都要写上
+#################################################################
+
+# 客户端配置
+client:
+  server_ip: '176.122.151.217'
+  server_port: '7000'
+
+# 服务端配置
+server:
+  bind_ip: '0.0.0.0'
+  bind_port: '7000'
+
+# 应用程序配置
+app:
+  - {name: 'test',local_port: '80',bind_ip: '0.0.0.0',listen_port: '6161',passwd: 'test'}
+  - {name: 'test2',local_port: '80',bind_ip: '0.0.0.0',listen_port: '6162',passwd: 'test2'}
+
+# 日志
+log:
+  # DEBUG < INFO < WARING < ERROR < FATAL
+  log_level: 'DEBUG'
+  # 设置log输出路径
+  log_path: './log'
+  # 输出方式 file or console
+  log_way: 'console'
+  # 设置 console 输出是否精简，默认完整输出
+  log_simple: true
