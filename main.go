@@ -40,6 +40,9 @@ func main() {
 
 	if app.CONF.Common.IsServer {
 		// Server
+		gg.Infof("[nio] start server\n")
+		app.InitServer()
+		app.ControlServer()
 	}
 }
 

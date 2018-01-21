@@ -12,6 +12,10 @@ var connection *Conn = nil
 
 func ControlClient(client *Client, wait *sync.WaitGroup) {
 	defer wait.Done()
+	// 在 server 上注册 APP
+
+	// todo
+
 	c, err := DialServer(ClientServerIP, ClientServerPort)
 	if err != nil {
 		gg.Errorf("[nio] app [%v] dial server failed\n", client.Name)

@@ -14,6 +14,8 @@ var (
 const (
 	ControlConn = 0
 	WorkConn    = 1
+	Idle        = 0
+	Working     = 1
 )
 
 func InitLog() {
