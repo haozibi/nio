@@ -7,6 +7,9 @@ import (
 )
 
 type NioConfig struct {
+	Common struct {
+		IsServer bool `yaml:"is_server"`
+	}
 	Client struct {
 		ServerIP   string `yaml:"server_ip"`
 		ServerPort string `yaml:"server_port"`

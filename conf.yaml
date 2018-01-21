@@ -12,9 +12,13 @@
 # 注意：所有配置选项都要写上
 #################################################################
 
+# 通用设置
+common:
+  is_server: false
+
 # 客户端配置
 client:
-  server_ip: '176.122.151.217'
+  server_ip: '0.0.0.0'
   server_port: '7000'
 
 # 服务端配置
@@ -25,7 +29,7 @@ server:
 # 应用程序配置
 app:
   - {name: 'test',local_port: '80',bind_ip: '0.0.0.0',listen_port: '6161',passwd: 'test'}
-  - {name: 'test2',local_port: '80',bind_ip: '0.0.0.0',listen_port: '6162',passwd: 'test2'}
+  - {name: 'test2',local_port: '8080',bind_ip: '0.0.0.0',listen_port: '6162',passwd: 'test2'}
 
 # 日志
 log:
