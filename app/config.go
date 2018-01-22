@@ -26,10 +26,10 @@ type NioConfig struct {
 		Passwd     string `yaml:"passwd"`
 	}
 	Log struct {
-		LogLevel  string `yaml:"log_level"`
-		LogPath   string `yaml:"log_path"`
-		LogWay    string `yaml:"log_way"`
-		LogSimple bool   `yaml:"log_simple"`
+		LogLevel   string `yaml:"log_level"`
+		LogPath    string `yaml:"log_path"`
+		LogWay     string `yaml:"log_way"`
+		LogOutType string `yaml:"log_outtype"`
 	}
 }
 

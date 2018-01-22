@@ -110,7 +110,7 @@ func (c *Conn) GetRemoteAddr() (addr string) {
 	return c.TCPConn.RemoteAddr().String()
 }
 
-func (c *Conn) GetLocalAddr(addr string) {
+func (c *Conn) GetLocalAddr() (addr string) {
 	return c.TCPConn.LocalAddr().String()
 }
 

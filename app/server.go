@@ -31,7 +31,7 @@ var Servers map[string]*Server = make(map[string]*Server)
 var TCPl *Listener // server 接受用户行为的监听器
 
 func InitServer() {
-	if len(CONF.Server.BindIP) == 0 || len(CONF.Server.BindPort) || len(CONF.App) == 0 {
+	if len(CONF.Server.BindIP) == 0 || len(CONF.Server.BindPort) == 0 || len(CONF.App) == 0 {
 		panic(ErrorConf)
 	}
 	ServerBindIP = CONF.Server.BindIP

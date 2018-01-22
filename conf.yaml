@@ -40,4 +40,4 @@ log:
   # 输出方式 file or console
   log_way: 'console'
   # 设置 console 输出是否精简，默认完整输出
-  log_simple: true
+  log_outtype: "NORMAL"
