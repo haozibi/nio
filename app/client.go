@@ -78,7 +78,7 @@ func (c *Client) GetRemoteConn() (conn *Conn, err error) {
 	}
 
 	resquest := &ClientControlRequest{
-		Type:    WorkConn,
+		Type:    WorkConnType,
 		AppName: c.Name,
 		Passwd:  c.Passwd,
 	}

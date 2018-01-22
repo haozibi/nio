@@ -127,6 +127,7 @@ func (c *Conn) Write(content string) (err error) {
 	return
 }
 
+// very import
 func Join(c1 *Conn, c2 *Conn) {
 	var wait sync.WaitGroup
 	pipe := func(dst *Conn, src *Conn) {

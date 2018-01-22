@@ -15,6 +15,7 @@
 # 通用设置
 common:
   is_server: false
+  user_conntimeout: 10
 
 # 客户端配置
 client:

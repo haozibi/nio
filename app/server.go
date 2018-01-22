@@ -5,6 +5,7 @@ import (
 	"os"
 	"strconv"
 	"sync"
+	"time"
 
 	gg "github.com/haozibi/gglog"
 )
@@ -52,11 +53,118 @@ func InitServer() {
 		s.Passwd = v.Passwd
 		s.BindIP = v.BindIP
 		s.ListenPort, _ = strconv.ParseInt(v.ListenPort, 10, 64)
-		s.Status = Idle
+		s.Status = IdleType
 		s.clientConnChan = make(chan *Conn)
 		s.controlMsgChan = make(chan int64)
 		s.userConnList = list.New()
 
 		Servers[v.Name] = s
 	}
+}
+
+func (s *Server) Lock() {
+	s.mutex.Lock()
+}
+
+func (s *Server) UnLock() {
+	s.mutex.Unlock()
+}
+
+func (s *Server) Start() (err error) {
+	s.listenr, err = Listen(s.BindIP, s.ListenPort)
+	if err != nil {
+		return err
+	}
+	s.Status = WorkingType
+
+	// 监听用户发送的请求
+	go func() {
+		for {
+			c, err := s.listenr.GetConn()
+			if err != nil {
+				gg.Errorf("app [%v] listenr is closed\n", s.Name)
+				return
+			}
+			gg.Infof("app [%v] get one new user conn,%v\n", s.Name, c.GetRemoteAddr())
+			s.Lock()
+			if s.Status != WorkingType {
+				gg.Debugf("app [%v] not working,user conn close", s.Name)
+				c.Close() // 只是关闭了用户连接
+				s.UnLock()
+				return
+			}
+			s.userConnList.PushBack(c)
+			s.UnLock()
+
+			s.controlMsgChan <- 1
+
+			// timeout
+			time.AfterFunc(time.Duration(userConnTimeOut)*time.Second, func() {
+				s.Lock()
+				defer s.UnLock()
+				ele := s.userConnList.Front()
+				if ele == nil {
+					return
+				}
+				userConn := ele.Value.(*Conn)
+				if userConn == c {
+					gg.Errorf("app [%v] user[ %v] conn time out\n", s.Name, c.GetRemoteAddr())
+				}
+			})
+		}
+	}()
+
+	// 用户conn 与客户端的进行交换
+	go func() {
+		for {
+			clientConn, ok := <-s.clientConnChan
+			if !ok {
+				return
+			}
+			s.Lock()
+			ele := s.userConnList.Front()
+
+			var userConn *Conn
+			if ele != nil {
+				userConn = ele.Value.(*Conn)
+				s.userConnList.Remove(ele)
+			} else {
+				clientConn.Close()
+				s.UnLock()
+				// 因为已经是空，所以不需要close
+				continue
+			}
+			s.UnLock()
+
+			// 开始交换
+			go Join(clientConn, userConn)
+		}
+	}()
+
+	return nil
+}
+
+func (s *Server) GetNewClientConn(conn *Conn) {
+	s.clientConnChan <- conn
+}
+
+func (s *Server) WaitUserConn() (closeFlag bool) {
+	closeFlag = false
+
+	// start() 中当获得 用户conn 时会向 controlMsgChan 《- 1
+	_, ok := <-s.controlMsgChan
+	if !ok {
+		closeFlag = true
+	}
+	return
+}
+
+func (s *Server) Close() {
+	s.Lock()
+	s.Status = IdleType
+	s.listenr.Close()
+	close(s.clientConnChan)
+	close(s.controlMsgChan)
+	s.userConnList = list.New()
+	s.UnLock()
 }

@@ -8,7 +8,8 @@ import (
 
 type NioConfig struct {
 	Common struct {
-		IsServer bool `yaml:"is_server"`
+		IsServer        bool `yaml:"is_server"`
+		UserConnTimeout int  `yaml:"user_conntimeout"`
 	}
 	Client struct {
 		ServerIP   string `yaml:"server_ip"`

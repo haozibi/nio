@@ -48,7 +48,7 @@ func registerApp(client *Client) (conn *Conn, err error) {
 		return
 	}
 	req := ClientControlRequest{
-		Type:    ControlConn,
+		Type:    ControlConnType,
 		AppName: client.Name,
 		Passwd:  client.Passwd,
 	}

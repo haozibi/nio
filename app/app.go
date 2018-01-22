@@ -12,10 +12,15 @@ var (
 
 // connection type
 const (
-	ControlConn = 0
-	WorkConn    = 1
-	Idle        = 0
-	Working     = 1
+	ControlConnType = 0
+	WorkConnType    = 1
+	IdleType        = 0
+	WorkingType     = 1
+	ErrorType       = 1
+)
+
+var (
+	userConnTimeOut = CONF.Common.UserConnTimeout
 )
 
 func InitLog() {
