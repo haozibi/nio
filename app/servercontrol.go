@@ -42,7 +42,10 @@ func controlServerApp(conn *Conn) {
 	if err != nil {
 		clientResponse.Code = ErrorType
 	}
-	// !=0 说明是要回复 app 注册
+
+	// 当是 App 注册信息的时候，返回Client一个确认信息
+	// 如果是 Client work conn 则直接不回复，直接返回
+	// len(info)==0 说明是要回复 app 注册
 	if len(info) == 0 {
 		defer conn.Close()
 		clientResponse.Msg = "hello nio"
@@ -54,6 +57,10 @@ func controlServerApp(conn *Conn) {
 			time.Sleep(1 * time.Second)
 			return
 		}
+	} else {
+		// import
+		// work conn, just return
+		return
 	}
 
 	s, ok := Servers[clientResquest.AppName]
