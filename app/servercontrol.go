@@ -38,15 +38,14 @@ func controlServerApp(conn *Conn) {
 	// 检查 app 信息
 	clientResponse := new(ClientControlResponse)
 	info, err := checkApp(clientResquest, conn)
+	clientResponse.Code = 0
 	if err != nil {
 		clientResponse.Code = ErrorType
-		clientResponse.Msg = info
 	}
 	// !=0 说明是要回复 app 注册
-	if len(info) != 0 {
+	if len(info) == 0 {
 		defer conn.Close()
-		clientResponse.Code = 0
-		clientResponse.Msg = info
+		clientResponse.Msg = "hello nio"
 		buf, _ := json.Marshal(clientResponse)
 		err = conn.Write(string(buf) + "\n")
 		if err != nil {
@@ -115,6 +114,7 @@ func checkApp(request *ClientControlRequest, conn *Conn) (info string, err error
 		}
 		info = "hello haozibi"
 		gg.Infof("app [%v] start success\n", request.AppName)
+		return "", nil
 	} else if request.Type == WorkConnType {
 		// 正常连接
 		if s.Status != WorkingType {
@@ -122,6 +122,7 @@ func checkApp(request *ClientControlRequest, conn *Conn) (info string, err error
 			return
 		}
 		s.GetNewClientConn(conn)
+		return "not need response", nil
 	} else {
 		info = fmt.Sprintf("app [%v] type [%v] unknow", request.AppName, request.Type)
 		gg.Errorln(info)
