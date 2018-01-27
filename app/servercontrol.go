@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"time"
 
 	gg "github.com/haozibi/gglog"
@@ -69,9 +70,12 @@ func controlServerApp(conn *Conn) {
 		return
 	}
 
+	go readClientHeartBeat(s, conn)
+
 	serverRequest := new(ClientControlRequest)
 	serverRequest.Type = WorkConnType
 	for {
+		// 等待用户连接，一连接则发送工作信息给客户端
 		closeFlag := s.WaitUserConn()
 		if closeFlag {
 			gg.Debugf("app [%v] user conn is closed\n", s.Name)
@@ -136,4 +140,54 @@ func checkApp(request *ClientControlRequest, conn *Conn) (info string, err error
 		return info, errors.New(info)
 	}
 	return "", nil
+}
+
+// 接受 client 的心跳包
+func readClientHeartBeat(server *Server, conn *Conn) {
+	flag := true
+	var err error
+	var content string
+	var response = &ClientControlResponse{}
+	f := func() {
+		flag = false
+		server.Close()
+		gg.Errorf("app [%v], client heartbeat timeout\n", server.Name)
+	}
+	timer := time.AfterFunc(time.Duration(HeartBeatTimeout)*time.Second, f)
+	defer timer.Stop()
+
+	for flag {
+		content, err = conn.ReadLine()
+		if err != nil {
+			if err == io.EOF {
+				gg.Errorf("app [%v] client over\n", server.Name)
+				server.Close()
+				break
+			} else if conn == nil || conn.IsClosed() {
+				gg.Errorf("app [%v] client connect close\n", server.Name)
+				break
+			}
+			gg.Errorf("app [%v] read error,%v\n", server.Name, err)
+			continue
+		}
+		request := new(ClientControlRequest)
+		if err := json.Unmarshal([]byte(content), request); err != nil {
+			gg.Errorf("heart beat unmarshal error,%v\n", err)
+			continue
+		}
+		if request.Type == ClientHeartBeat {
+			timer.Reset(time.Duration(HeartBeatTimeout) * time.Second)
+			response.GeneraResponse.Code = ServerHeartBeat
+			responseMsg, err := json.Marshal(response)
+			if err != nil {
+				gg.Errorf("marshal heart beat response error,%v\n", err)
+				continue
+			}
+			err = conn.Write(string(responseMsg) + "\n")
+			if err != nil {
+				gg.Errorf("send heart beat response error,%v\n", err)
+				continue
+			}
+		}
+	}
 }

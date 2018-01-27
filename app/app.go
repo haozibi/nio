@@ -19,10 +19,14 @@ const (
 	IdleType        = 0
 	WorkingType     = 1
 	ErrorType       = 1
+	ClientHeartBeat = 99
+	ServerHeartBeat = 100
 )
 
 var (
-	userConnTimeOut = CONF.Common.UserConnTimeout
+	userConnTimeOut   = CONF.Common.UserConnTimeout
+	HeartBeatInterval = 1
+	HeartBeatTimeout  = 30
 )
 
 func InitLog() {

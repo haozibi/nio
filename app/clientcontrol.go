@@ -5,11 +5,13 @@ import (
 	"errors"
 	"io"
 	"sync"
+	"time"
 
 	gg "github.com/haozibi/gglog"
 )
 
 var connection *Conn = nil
+var heartBeatTimer *time.Timer = nil
 
 func ControlClient(client *Client, wait *sync.WaitGroup) {
 	defer wait.Done()
@@ -27,15 +29,39 @@ func ControlClient(client *Client, wait *sync.WaitGroup) {
 		content, err := connection.ReadLine()
 		if err == io.EOF || connection == nil || connection.IsClosed() {
 			gg.Debugf("app [%v] server close this control conn", client.Name)
+			for {
+				tmpConn, err := registerApp(client)
+				if err == nil {
+					// 断开重新连接
+					connection.Close()
+					connection = tmpConn
+					break
+				}
+				time.Sleep(2 * time.Second)
+			}
+			continue
 		} else if err != nil {
 			gg.Infof("app [%v] read from server error, %v\n", client.Name, err)
+			continue
 		}
+
 		clientCtlResponse := new(ClientControlResponse)
 		if err := json.Unmarshal([]byte(content), clientCtlResponse); err != nil {
 			gg.Infof("app [%v] parse error,%v\n", err)
 			continue
 		}
 
+		// 这是一个心跳包
+		if clientCtlResponse.GeneraResponse.Code == ServerHeartBeat {
+			// 说明是已经注册成功
+			if heartBeatTimer != nil {
+				heartBeatTimer.Reset(time.Duration(HeartBeatTimeout) * time.Second)
+			} else {
+				gg.Errorf("heartBeatTimer is nil\n")
+			}
+			continue
+		}
+		// Client 接到 server 的开始工作信息
 		client.StartTunnel()
 	}
 }
@@ -75,5 +101,43 @@ func registerApp(client *Client) (conn *Conn, err error) {
 	}
 
 	// 注册成功，心跳包
+	go startHeartbeat(conn)
+
+	gg.Debugf("app [%v] connect server success\n", client.Name)
 	return conn, nil
+}
+
+func startHeartbeat(conn *Conn) {
+	f := func() {
+		gg.Errorf("heart beat timeout\n")
+		if conn != nil {
+			conn.Close()
+		}
+	}
+	heartBeatTimer = time.AfterFunc(time.Duration(HeartBeatTimeout)*time.Second, f)
+	defer heartBeatTimer.Stop()
+
+	tmpRequest := &ClientControlRequest{
+		Type:    ClientHeartBeat,
+		AppName: "",
+		Passwd:  "",
+	}
+	request, err := json.Marshal(tmpRequest)
+	if err != nil {
+		gg.Errorf("marshal error,%v\n", err)
+	}
+	gg.Debugf("start heart beat\n")
+	for {
+		time.Sleep(time.Duration(HeartBeatInterval) * time.Second)
+		if conn != nil && !conn.IsClosed() {
+			err = conn.Write(string(request) + "\n")
+			if err != nil {
+				gg.Errorf("send heart beat to server error,%v\n", err)
+				continue
+			}
+		} else {
+			break
+		}
+	}
+	gg.Debugf("heart beat exit\n")
 }

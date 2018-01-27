@@ -30,7 +30,7 @@ server:
 # 应用程序配置
 app:
   - {name: 'test',local_port: '80',bind_ip: '0.0.0.0',listen_port: '6161',passwd: 'test'}
-  - {name: 'test2',local_port: '8080',bind_ip: '0.0.0.0',listen_port: '6162',passwd: 'test2'}
+  #- {name: 'test2',local_port: '8080',bind_ip: '0.0.0.0',listen_port: '6162',passwd: 'test2'}
 
 # 日志
 log:
