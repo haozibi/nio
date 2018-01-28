@@ -47,7 +47,7 @@ func ControlClient(client *Client, wait *sync.WaitGroup) {
 
 		clientCtlResponse := new(ClientControlResponse)
 		if err := json.Unmarshal([]byte(content), clientCtlResponse); err != nil {
-			gg.Infof("app [%v] parse error,%v\n", err)
+			gg.Infof("app [%v] unmarshal server response error,%v\n", err)
 			continue
 		}
 
@@ -62,6 +62,7 @@ func ControlClient(client *Client, wait *sync.WaitGroup) {
 			continue
 		}
 		// Client 接到 server 的开始工作信息
+		// 只有开始工作信息才开始工作
 		client.StartTunnel()
 	}
 }
@@ -101,15 +102,15 @@ func registerApp(client *Client) (conn *Conn, err error) {
 	}
 
 	// 注册成功，心跳包
-	go startHeartbeat(conn)
+	go startHeartbeat(conn, client.Name)
 
 	gg.Debugf("app [%v] connect server success\n", client.Name)
 	return conn, nil
 }
 
-func startHeartbeat(conn *Conn) {
+func startHeartbeat(conn *Conn, name string) {
 	f := func() {
-		gg.Errorf("heart beat timeout\n")
+		gg.Errorf("[%v] heart beat timeout\n", name)
 		if conn != nil {
 			conn.Close()
 		}
@@ -126,11 +127,12 @@ func startHeartbeat(conn *Conn) {
 	if err != nil {
 		gg.Errorf("marshal error,%v\n", err)
 	}
-	gg.Debugf("start heart beat\n")
+	gg.Debugf("[%v] start heart beat\n", name)
 	for {
 		time.Sleep(time.Duration(HeartBeatInterval) * time.Second)
 		if conn != nil && !conn.IsClosed() {
 			err = conn.Write(string(request) + "\n")
+			// gg.Infof("send heart beat\n")
 			if err != nil {
 				gg.Errorf("send heart beat to server error,%v\n", err)
 				continue
@@ -139,5 +141,5 @@ func startHeartbeat(conn *Conn) {
 			break
 		}
 	}
-	gg.Debugf("heart beat exit\n")
+	gg.Debugf("[%v] heart beat exit\n", name)
 }

@@ -49,7 +49,7 @@ func (c *Client) StartTunnel() (err error) {
 	if err != nil {
 		return
 	}
-	gg.Debugf("[nio] join two conn\n")
+	gg.Debugf("join two conn\n")
 	go Join(localConn, remoteConn)
 	return
 }
@@ -57,7 +57,7 @@ func (c *Client) StartTunnel() (err error) {
 func (c *Client) GetLocalConn() (conn *Conn, err error) {
 	conn, err = DialServer(ClientLocalIP, c.LocalPort)
 	if err != nil {
-		gg.Errorf("[nio] app [%v] connect to local error,%v\n", err)
+		gg.Errorf("app [%v] connect to local error,%v\n", err)
 	}
 	return
 }
@@ -73,7 +73,7 @@ func (c *Client) GetRemoteConn() (conn *Conn, err error) {
 
 	conn, err = DialServer(ClientServerIP, ClientServerPort)
 	if err != nil {
-		gg.Errorf("[nio] app [%v] connect to remote[%v:%v] error,%v\n", c.Name, ClientServerIP, ClientServerPort, err)
+		gg.Errorf("app [%v] connect to remote[%v:%v] error,%v\n", c.Name, ClientServerIP, ClientServerPort, err)
 		return
 	}
 
@@ -86,7 +86,7 @@ func (c *Client) GetRemoteConn() (conn *Conn, err error) {
 	buf, _ := json.Marshal(resquest)
 	err = conn.Write(string(buf) + "\n")
 	if err != nil {
-		gg.Errorf("[nio] app [%v] write to remote error,%v", err)
+		gg.Errorf("app [%v] write to remote error,%v", err)
 		return
 	}
 	return

@@ -41,7 +41,7 @@ func InitServer() {
 	// 监听 Client 的请求
 	tcpl, err := Listen(ServerBindIP, ServerBindPort)
 	if err != nil {
-		gg.Errorf("[nio] create server listen error,%v", err)
+		gg.Errorf("create server listen error,%v", err)
 		os.Exit(-1)
 	}
 
@@ -53,10 +53,6 @@ func InitServer() {
 		s.Passwd = v.Passwd
 		s.BindIP = v.BindIP
 		s.ListenPort, _ = strconv.ParseInt(v.ListenPort, 10, 64)
-		s.Status = IdleType
-		s.clientConnChan = make(chan *Conn)
-		s.controlMsgChan = make(chan int64)
-		s.userConnList = list.New()
 
 		Servers[v.Name] = s
 	}
@@ -70,7 +66,15 @@ func (s *Server) UnLock() {
 	s.mutex.Unlock()
 }
 
+func (s *Server) Init() {
+	s.Status = IdleType
+	s.clientConnChan = make(chan *Conn)
+	s.controlMsgChan = make(chan int64)
+	s.userConnList = list.New()
+}
+
 func (s *Server) Start() (err error) {
+	s.Init()
 	s.listenr, err = Listen(s.BindIP, s.ListenPort)
 	if err != nil {
 		return err
@@ -82,7 +86,7 @@ func (s *Server) Start() (err error) {
 		for {
 			c, err := s.listenr.GetConn()
 			if err != nil {
-				gg.Errorf("app [%v] listenr is closed\n", s.Name)
+				gg.Errorf("app [%v] listenr is closed,%v\n", s.Name, err)
 				return
 			}
 			gg.Infof("app [%v] get one new user conn,%v\n", s.Name, c.GetRemoteAddr())
@@ -96,6 +100,7 @@ func (s *Server) Start() (err error) {
 			s.userConnList.PushBack(c)
 			s.UnLock()
 
+			// 同步，阻塞 client Conn
 			s.controlMsgChan <- 1
 
 			// timeout
@@ -108,7 +113,7 @@ func (s *Server) Start() (err error) {
 				}
 				userConn := ele.Value.(*Conn)
 				if userConn == c {
-					gg.Errorf("app [%v] user[ %v] conn time out\n", s.Name, c.GetRemoteAddr())
+					gg.Errorf("app [%v] user[%v] conn time out, wait client\n", s.Name, c.GetRemoteAddr())
 				}
 			})
 		}

@@ -5,7 +5,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"sync"
 
 	gg "github.com/haozibi/gglog"
 	"github.com/haozibi/nio/app"
@@ -17,35 +16,22 @@ func main() {
 	flag.Parse()
 	defer gg.Flush()
 
+	app.IsDebug = true
+
 	app.InitLog()
 
 	gg.SetOutLevel(app.CONF.Log.LogLevel)
-	gg.SetOutType(app.CONF.Log.LogOutType)
+	if app.IsDebug {
+		gg.SetOutType(app.CONF.Log.LogOutType)
+	} else {
+		gg.SetOutType("SIMPLE")
+	}
 	gg.SetLogDir(app.CONF.Log.LogPath)
 	gg.SetPrefix("[nio] ")
 
 	fmt.Printf("%v\n\n", logo)
 
-	if !app.CONF.Common.IsServer {
-		// Client
-		gg.Infof("start client\n")
-		app.InitClient()
-		var wait sync.WaitGroup
-		wait.Add(len(app.CONF.App))
-		gg.Infof("add %v app\n", len(app.CONF.App))
-		for _, v := range app.Clients {
-			go app.ControlClient(v, &wait)
-		}
-		wait.Wait()
-		gg.Infof("all app exit !\n")
-	}
-
-	if app.CONF.Common.IsServer {
-		// Server
-		gg.Infof("start server\n")
-		app.InitServer()
-		app.ControlServer()
-	}
+	app.StartNio()
 }
 
 var logo = `  _   _ ___ ___  

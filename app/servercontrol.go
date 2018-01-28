@@ -16,7 +16,7 @@ func ControlServer() {
 		if err != nil {
 			return
 		}
-		gg.Debugf("[nio] new conn => %v\n", c.GetRemoteAddr())
+		gg.Debugf("get new conn => %v\n", c.GetRemoteAddr())
 		go controlServerApp(c)
 	}
 }
@@ -168,8 +168,11 @@ func readClientHeartBeat(server *Server, conn *Conn) {
 				break
 			}
 			gg.Errorf("app [%v] read error,%v\n", server.Name, err)
-			continue
+			server.Close()
+			gg.Infof("app [%v] close due to client exit\n", server.Name)
+			break
 		}
+
 		request := new(ClientControlRequest)
 		if err := json.Unmarshal([]byte(content), request); err != nil {
 			gg.Errorf("heart beat unmarshal error,%v\n", err)
@@ -184,6 +187,7 @@ func readClientHeartBeat(server *Server, conn *Conn) {
 				continue
 			}
 			err = conn.Write(string(responseMsg) + "\n")
+			// gg.Debugf("send heart beat\n")
 			if err != nil {
 				gg.Errorf("send heart beat response error,%v\n", err)
 				continue
