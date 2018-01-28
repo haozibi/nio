@@ -9,5 +9,4 @@ go:
     - tip
 
 script:
-    - go get ./...
     - go build
